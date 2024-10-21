@@ -17,7 +17,7 @@ function fetchBoardState() {
         });
 }
 
-setInterval(fetchBoardState, 5000);
+setInterval(fetchBoardState, 1000);
 
 document.getElementById('move-form').onsubmit = function(e) {
     e.preventDefault(); 

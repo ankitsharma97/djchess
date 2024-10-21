@@ -84,16 +84,16 @@ WSGI_APPLICATION = 'djchess.wsgi.application'
 #     }
 # }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'chess',          # Name of your database
-        'USER': 'postgres',       # Database user (owner)
-        'PASSWORD': 'ANKit@123',  # Your PostgreSQL password
-        'HOST': 'localhost',      # Set to 'localhost' or the IP address of your database server
-        'PORT': '5432',           # Default PostgreSQL port
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'chess',          # Name of your database
+#         'USER': 'postgres',       # Database user (owner)
+#         'PASSWORD': 'ANKit@123',  # Your PostgreSQL password
+#         'HOST': 'localhost',      # Set to 'localhost' or the IP address of your database server
+#         'PORT': '5432',           # Default PostgreSQL port
+#     }
+# }
 
 
 
@@ -111,16 +111,16 @@ DATABASES = {
 # }
 
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'dbname',
-#         'USER': 'user',
-#         'PASSWORD': 'password',
-#         'HOST': 'db',
-#         'PORT': '5432',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'dbname',
+        'USER': 'user',
+        'PASSWORD': 'password',
+        'HOST': 'db',
+        'PORT': '5432',
+    }
+}
 
 
 
