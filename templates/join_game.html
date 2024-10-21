@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Join A Game{% endblock %}
+
+{% block content %}
+<div class="container mt-5 d-flex justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-lg border-0 rounded">
+            <div class="card-header bg-primary text-white text-center">
+                <h3 class="mb-0">Join A Game</h3>
+            </div>
+            <div class="card-body p-5">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="form-group mb-4">
+                        <label for="game_id" class="form-label">Game ID</label>
+                        <input type="text" class="form-control form-control-lg" id="game_id" name="game_id" placeholder="Enter your Game ID" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-lg btn-success btn-block shadow-sm">Start Game</button>
+                </form>
+
+                <div class="text-center mt-4">
+                    <a href="{% url 'home' %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

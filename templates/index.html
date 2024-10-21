@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Chess Game - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+
+    <h1>Chess Game Dashboard</h1>
+
+    {% if user.is_authenticated   %}
+    
+
+
+        {% if messages %}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            {% for message in messages %}
+                {{ message }}
+                <br>
+            {% endfor %}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        {% endif %}
+
+
+
+        <div class="row">
+            <div class="col-md-6">
+                <h2>Active Game</h2>
+                {% if active_game %}
+                    <div id="chess-board">
+                        <h4>Game with {{ active_game.opponent.username }}</h4>
+                        <div id="chessboard">
+                         {% comment %} make for chess rendering  {% endcomment %}
+                        </div>
+                    </div>
+                    <form action="{% url 'game_detail' active_game.id %}" method="get">
+                        {% csrf_token %}
+                        <button class="mt-2 btn btn-danger" type="submit">Join The Game</button>
+                    </form>
+
+                    <form action="{% url 'resign_game' active_game.id %}" method="post">
+                        {% csrf_token %}
+                        <button class=" mt-2 btn btn-danger" type="submit">Resign Game</button>
+                    </form>
+                {% else %}
+                    <h3>No Active Game</h3>
+                    <div class="mt-2" >
+                        <a href="{% url 'create_game' %}" class="btn btn-primary">Start a New Game</a>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{% url 'join_game' %}" class="btn btn-primary">Join the Game</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-6">
+                <div class="container">
+                    <h2 class="mb-4">Game History</h2>
+                    <div class="row">
+                        <!-- Column Headers -->
+                        <div class="col-md-3 fw-bold">Opponent</div>
+                        <div class="col-md-2 fw-bold">Moves</div>
+                        <div class="col-md-3 fw-bold">Result</div>
+                        <div class="col-md-4 fw-bold">Actions</div>
+                    </div>
+                    <hr>
+                    <!-- Loop through games -->
+                    {% for game in past_games %}
+                    <div class="row align-items-center mb-3">
+                        <!-- Opponent -->
+                        <div class="col-md-3">
+                            {% if game.player1.username == request.user.username %}
+                                {{ game.player2.first_name }}
+                            {% else %}
+                                {{ game.player1.first_name }}
+                            {% endif %}
+                        </div>
+
+                        
+                        <div class="col-md-2">
+                            {{ game.moves_count }}
+                        </div>
+
+
+                        <!-- Game Result -->
+                        <div class="col-md-3">
+                            {{ game.result }}
+                        </div>
+                
+                        <!-- Action Buttons (Edit & Delete) -->
+                        <div class="col-md-4">
+                            <a href="{% url 'edit_game' game.id %}" class="btn btn-info btn-sm me-2">Edit</a>
+                            <a href="{% url 'delete_game' game.id %}" class="btn btn-danger btn-sm">delete</a>
+                        </div>
+                    </div>
+            
+                    <hr>
+                    {% endfor %}
+                </div>
+                
+            </div>
+
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            <p>You need to <a href="{% url 'login' %}">login</a> to access the dashboard.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

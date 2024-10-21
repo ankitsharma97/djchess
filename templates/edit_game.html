@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Game Journal - {{ game.player1.username }} vs {{ game.player2.username }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Edit Game Journal</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="journal_entry">Journal Entry:</label>
+            <textarea id="journal_entry" name="journal_entry" class="form-control" rows="5">{{ game.journal_entry }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Entry</button>
+    </form>
+    
+    <a href="{% url 'game_detail' game.id %}" class="btn btn-secondary mt-3">Back to Game Details</a>
+</div>
+{% endblock %}

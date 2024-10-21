@@ -1,0 +1,48 @@
+{% extends "./base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-5 col-md-7">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="mb-0 text-center">Update Password</h1>
+                </div>
+                {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email:</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{user}}" readonly>
+                            <div class="invalid-feedback">
+                                Please enter a valid email address.
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password:</label>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
+                            <div class="invalid-feedback">
+                                Please provide a password.
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="npassword" class="form-label">New Password:</label>
+                            <input type="password" class="form-control" id="npassword" name="npassword" placeholder="Enter password" required>
+                            <div class="invalid-feedback">
+                                Please provide a new password.
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Password</button>
+                        <a href="{% url "logout" %}"class = "btn btn-sm btn-danger">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
