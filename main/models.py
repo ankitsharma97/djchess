@@ -6,6 +6,7 @@ class Game(models.Model):
     player2 = models.ForeignKey(User, related_name='games_as_player2', on_delete=models.CASCADE, null=True, blank=True)
     board_state = models.TextField()  
     turn = models.CharField(max_length=5, choices=[('white', 'White'), ('black', 'Black')])
+    current_player = models.ForeignKey(User, related_name='games_as_current_player', on_delete=models.CASCADE, null=True, blank=True)
     is_over = models.BooleanField(default=False)
     winner = models.ForeignKey(User, related_name='games_won', on_delete=models.CASCADE, null=True, blank=True)
     result = models.CharField(max_length=10, choices=[('win', 'Win'), ('loss', 'Loss'), ('draw', 'Draw'), ('stalemate', 'Stalemate')], null=True, blank=True)

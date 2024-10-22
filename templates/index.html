@@ -7,10 +7,8 @@
 
     <h1>Chess Game Dashboard</h1>
 
-    {% if user.is_authenticated   %}
+    {% if user.is_authenticated %}
     
-
-
         {% if messages %}
         <div class="alert alert-info alert-dismissible fade show" role="alert">
             {% for message in messages %}
@@ -23,8 +21,6 @@
         </div>
         {% endif %}
 
-
-
         <div class="row">
             <div class="col-md-6">
                 <h2>Active Game</h2>
@@ -32,7 +28,7 @@
                     <div id="chess-board">
                         <h4>Game with {{ active_game.opponent.username }}</h4>
                         <div id="chessboard">
-                         {% comment %} make for chess rendering  {% endcomment %}
+                            <!-- Chessboard rendering goes here -->
                         </div>
                     </div>
                     <form action="{% url 'game_detail' active_game.id %}" method="get">
@@ -42,34 +38,69 @@
 
                     <form action="{% url 'resign_game' active_game.id %}" method="post">
                         {% csrf_token %}
-                        <button class=" mt-2 btn btn-danger" type="submit">Resign Game</button>
+                        <button class="mt-2 btn btn-danger" type="submit">Resign Game</button>
                     </form>
                 {% else %}
                     <h3>No Active Game</h3>
-                    <div class="mt-2" >
+                    <div class="mt-2">
                         <a href="{% url 'create_game' %}" class="btn btn-primary">Start a New Game</a>
                     </div>
                     <div class="mt-2">
                         <a href="{% url 'join_game' %}" class="btn btn-primary">Join the Game</a>
                     </div>
                 {% endif %}
+
+                <div class="container mt-5">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h2 class="text-center">Invite a Player</h2>
+                        </div>
+                    </div>
+                
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="row border-bottom font-weight-bold">
+                                <div class="col-md-4">Username</div>
+                                <div class="col-md-4">First Name</div>
+                                <div class="col-md-4">Invite</div>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="row">
+                        {% for player in players %}
+                            {% if player.username != request.user.username %}
+                                <div class="col-md-12">
+                                    <div class="row border-bottom py-2">
+                                        <div class="col-md-4">{{ player.username }}</div>
+                                        <div class="col-md-4">{{ player.first_name }}</div>
+                                        <div class="col-md-4">
+                                            <form action="{% url 'create_game' %}" method="post">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="invite_player" value="{{ player.id }}">
+                                                <button class="btn btn-primary" type="submit">Invite</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
 
             <div class="col-md-6">
                 <div class="container">
                     <h2 class="mb-4">Game History</h2>
                     <div class="row">
-                        <!-- Column Headers -->
                         <div class="col-md-3 fw-bold">Opponent</div>
                         <div class="col-md-2 fw-bold">Moves</div>
                         <div class="col-md-3 fw-bold">Result</div>
                         <div class="col-md-4 fw-bold">Actions</div>
                     </div>
                     <hr>
-                    <!-- Loop through games -->
                     {% for game in past_games %}
                     <div class="row align-items-center mb-3">
-                        <!-- Opponent -->
                         <div class="col-md-3">
                             {% if game.player1.username == request.user.username %}
                                 {{ game.player2.first_name }}
@@ -77,32 +108,24 @@
                                 {{ game.player1.first_name }}
                             {% endif %}
                         </div>
-
-                        
-                        <div class="col-md-2">
-                            {{ game.moves_count }}
-                        </div>
-
-
-                        <!-- Game Result -->
-                        <div class="col-md-3">
-                            {{ game.result }}
-                        </div>
-                
-                        <!-- Action Buttons (Edit & Delete) -->
+                        <div class="col-md-2">{{ game.moves_count }}</div>
+                        <div class="col-md-3">{{ game.result }}</div>
                         <div class="col-md-4">
                             <a href="{% url 'edit_game' game.id %}" class="btn btn-info btn-sm me-2">Edit</a>
-                            <a href="{% url 'delete_game' game.id %}" class="btn btn-danger btn-sm">delete</a>
+                            <a href="{% url 'delete_game' game.id %}" class="btn btn-danger btn-sm">Delete</a>
                         </div>
                     </div>
-            
                     <hr>
                     {% endfor %}
                 </div>
-                
             </div>
-
         </div>
+
+        
+        
+        
+        
+
     {% else %}
         <div class="alert alert-info" role="alert">
             <p>You need to <a href="{% url 'login' %}">login</a> to access the dashboard.</p>

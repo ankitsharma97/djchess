@@ -32,10 +32,12 @@ def home(request):
         (Q(player1=request.user) | Q(player2=request.user)),
         is_over=True
     ).order_by('-updated_at')  
+    players = User.objects.exclude(id=request.user.id)
 
     context = {
         'active_game': active_game,
         'past_games': past_games,
+        'players': players,
         'title': 'Chess Game - Dashboard',
     }
 
@@ -150,10 +152,21 @@ def create_game(request):
         if ongoing_games_as_player1 or ongoing_games_as_player2:
             return render(request, 'error.html', {'error': 'You cannot start a new game until your current game is completed.'})
 
-        game = Game.objects.create(player1=request.user, board_state=chess.Board().fen(), turn='white')
+        invited_player_id = request.POST.get('invite_player')
+
+        if invited_player_id:  # If an invited player ID is provided
+            invited_player = User.objects.get(id=invited_player_id)
+            game = Game.objects.create(player1=request.user, player2=invited_player, board_state=chess.Board().fen(), turn='white')
+        else:  # No invited player, start game and wait for another player
+            game = Game.objects.create(player1=request.user, board_state=chess.Board().fen(), turn='white')
+            # Set a message indicating that the game is waiting for another player
+            messages.info(request, 'Game created! Waiting for another player to join.')
+
         return redirect('game_detail', game_id=game.id)
 
-    return render(request, 'create_game.html')
+    users_to_invite = User.objects.exclude(id=request.user.id)
+    return render(request, 'create_game.html', {'users_to_invite': users_to_invite})
+
 
 
 @login_required
@@ -172,8 +185,10 @@ def join_game(request):
         else:
             return render(request, 'error.html', {'error': 'Game is already full.'})
 
-    available_games = Game.objects.filter(player2__isnull=True)
+    # Fetch games where the player was invited but hasn't joined yet
+    available_games = Game.objects.filter(player2__isnull=True).exclude(player1=request.user)
     return render(request, 'join_game.html', {'games': available_games})
+
 
 
 def board_status(board):
@@ -190,32 +205,41 @@ def game_detail(request, game_id):
     if request.method == "POST":
         if game.is_over:
             return JsonResponse({'error': 'Game is already over'}, status=400)
+        
         try:
             data = json.loads(request.body)  
             src = data.get('src')
             dest = data.get('dest')
 
-
+            # Check if it's the user's turn
             if (game.turn == 'white' and request.user != game.player1) or (game.turn == 'black' and request.user != game.player2):
                 return JsonResponse({'error': 'It is not your turn'}, status=403)
 
             move = chess.Move.from_uci(src + dest)
 
-            if move in board.legal_moves and game.turn == ('white' if board.turn else 'black'):
+            # Validate the move
+            if move in board.legal_moves:
                 board.push(move)
                 game.board_state = board.fen()
+                
+                # Update moves history
                 moves = game.moves or ''
                 game.moves = f'{moves} {src}{dest}'
                 game.moves_count += 1
-                game.turn = 'black' if game.turn == 'white' else 'white'
                 
+                # Update turn based on the board's state
+                game.turn = 'black' if board.turn == chess.BLACK else 'white'
+                
+                game.current_player = game.player2 if game.turn == 'black' else game.player1
+                
+                # Check for checkmate or stalemate
                 if board.is_checkmate():
                     game.is_over = True
                     game.winner = game.player1 if game.turn == 'black' else game.player2 
                     game.result = 'win' if game.turn == 'black' else 'loss'
                 elif board.is_stalemate():
                     game.is_over = True
-                    game.winner = None  # 
+                    game.winner = None
                     game.result = 'stalemate'
                 
                 game.save()

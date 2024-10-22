@@ -9,43 +9,59 @@
     {% if error %}
         <div class="alert alert-danger">{{ error }}</div>
     {% endif %}
-    
-    <div class="text-center mb-3">
-        <strong>Current Turn: {{ game.turn }}</strong>
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+            {{ message }}
+            <br>
+        {% endfor %}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
     </div>
-    <table class="table text-center">
+    {% endif %}
+
+    <div class="text-center mb-3">
+        <strong>Current Turn: {{ game.turn }}
+            {% if game.turn == 'black' %}
+                {{ game.player2.first_name  }} 
+            {% else %}
+                {{ game.player1.first_name }}
+            {% endif %}
+        </strong>
+    </div>
+    <table class="table-custom">
         <tbody>
             {% for row in "87654321" %}
             <tr>
-                <!-- Adding a border to the row numbers -->
-                <th >{{ row }}</th>
+                <th>{{ row }}</th>
                 {% for col in "abcdefgh" %}
-                    <td id="{{ col }}{{ row }}" class="chess-piece"  style="border: 1px solid black;">
-                        {% with key=col|add:row %}
-                            {% if board|get_item:key %}
-                                {% if board|get_item:key == 'r' %}
+                    <td id="cell-{{ col }}{{ row }}">
+                        {% with piece_key=col|add:row %}
+                            {% if board|get_item:piece_key %}
+                                {% if board|get_item:piece_key == 'r' %}
                                     &#9820;  <!-- Black Rook -->
-                                {% elif board|get_item:key == 'n' %}
+                                {% elif board|get_item:piece_key == 'n' %}
                                     &#9822;  <!-- Black Knight -->
-                                {% elif board|get_item:key == 'b' %}
+                                {% elif board|get_item:piece_key == 'b' %}
                                     &#9821;  <!-- Black Bishop -->
-                                {% elif board|get_item:key == 'q' %}
+                                {% elif board|get_item:piece_key == 'q' %}
                                     &#9819;  <!-- Black Queen -->
-                                {% elif board|get_item:key == 'k' %}
+                                {% elif board|get_item:piece_key == 'k' %}
                                     &#9818;  <!-- Black King -->
-                                {% elif board|get_item:key == 'p' %}
+                                {% elif board|get_item:piece_key == 'p' %}
                                     &#9823;  <!-- Black Pawn -->
-                                {% elif board|get_item:key == 'R' %}
+                                {% elif board|get_item:piece_key == 'R' %}
                                     &#9814;  <!-- White Rook -->
-                                {% elif board|get_item:key == 'N' %}
+                                {% elif board|get_item:piece_key == 'N' %}
                                     &#9816;  <!-- White Knight -->
-                                {% elif board|get_item:key == 'B' %}
+                                {% elif board|get_item:piece_key == 'B' %}
                                     &#9815;  <!-- White Bishop -->
-                                {% elif board|get_item:key == 'Q' %}
+                                {% elif board|get_item:piece_key == 'Q' %}
                                     &#9813;  <!-- White Queen -->
-                                {% elif board|get_item:key == 'K' %}
+                                {% elif board|get_item:piece_key == 'K' %}
                                     &#9812;  <!-- White King -->
-                                {% elif board|get_item:key == 'P' %}
+                                {% elif board|get_item:piece_key == 'P' %}
                                     &#9817;  <!-- White Pawn -->
                                 {% else %}
                                     &nbsp;  <!-- Empty square -->
@@ -58,26 +74,25 @@
                 {% endfor %}
             </tr>
             {% endfor %}
-            <tr class="border-secondary last-child">
+            <tr>
                 <th></th>
-                <!-- Adding a border to the column letters -->
-                <th>a</th>
-                <th>b</th>
-                <th>c</th>
-                <th>d</th>
-                <th>e</th>
-                <th>f</th>
-                <th>g</th>
-                <th>h</th>
+                <th>A</th>
+                <th>B</th>
+                <th>C</th>
+                <th>D</th>
+                <th>E</th>
+                <th>F</th>
+                <th>G</th>
+                <th>H</th>
             </tr>
         </tbody>
     </table>
-    
     <form id="move-form" method="post">
         {% csrf_token %}
         <div class="d-flex justify-content-center align-items-center mb-3">
-            <input type="text" id="src" placeholder="Source (e.g., e2)">
-            <input type="text" id="dst" placeholder="Destination (e.g., e4)">
+            <input type="text" id="src" placeholder="Source (e.g., e2)" required>
+            <input type="text" id="dst" placeholder="Destination (e.g., e4)" required>
+            
             <button class="btn btn-primary btn-sm me-2" type="submit">Move</button>
             <button class="btn btn-danger btn-sm" type="button" onclick="resignGame()">Resign</button>
         </div>
@@ -85,93 +100,94 @@
 </div>
 
 <script>
-function fetchBoardState() {
-    const gameId = "{{ game.id }}";
-
-    fetch(`/game/${gameId}/status/`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.board) {
-                updateBoard(data.board);  
+    function fetchBoardState() {
+        const gameId = "{{ game.id }}";
+    
+        fetch(`/game/${gameId}/status/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.board) {
+                    updateBoard(data.board);  
+                }
+            });
+    }
+    
+    setInterval(fetchBoardState, 1000);
+    
+    document.getElementById('move-form').onsubmit = function(e) {
+        e.preventDefault(); 
+    
+        const src = document.getElementById('src').value;
+        const dest = document.getElementById('dst').value;
+    
+        if (!src || !dest) {
+            alert('Please enter both source and destination.');
+            return;
+        }
+     
+        fetch('{% url "game_detail" game.id %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ src: src, dest: dest })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errorData => { throw new Error(errorData.error); });
             }
-        });
-}
-
-setInterval(fetchBoardState, 1000);
-
-document.getElementById('move-form').onsubmit = function(e) {
-    e.preventDefault(); 
-
-    const src = document.getElementById('src').value;
-    const dest = document.getElementById('dst').value;
-
-    console.log('Source:', src, 'Destination:', dest); 
-
-    if (!src || !dest) {
-        alert('Please enter both source and destination.');
-        return;
+            return response.json();
+        })
+        .then(data => {
+            updateBoard(data.board); 
+        })
+        .catch(error => alert(error.message)); 
+    };
+    
+    const pieceMapping = {
+        'p': '&#9823;',  // Black Pawn
+        'r': '&#9820;',  // Black Rook
+        'n': '&#9822;',  // Black Knight
+        'b': '&#9821;',  // Black Bishop
+        'q': '&#9819;',  // Black Queen
+        'k': '&#9818;',  // Black King
+        'P': '&#9817;',  // White Pawn
+        'R': '&#9814;',  // White Rook
+        'N': '&#9816;',  // White Knight
+        'B': '&#9815;',  // White Bishop
+        'Q': '&#9813;',  // White Queen
+        'K': '&#9812;',  // White King
+        ' ': '&nbsp;'    // Empty square
+    };
+    
+    function updateBoard(board) {
+        for (const [square, piece] of Object.entries(board)) {
+            const pieceSymbol = pieceMapping[piece] || pieceMapping[' '];  
+            const cell = document.getElementById(`cell-${square}`);
+            if (cell) {  // Check if the cell exists
+                cell.innerHTML = pieceSymbol;
+            }
+        }
     }
- 
-    fetch('{% url "game_detail" game.id %}', {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': '{{ csrf_token }}',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ src: src, dest: dest })
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(errorData => { throw new Error(errorData.error); });
-        }
-        return response.json();
-    })
-    .then(data => {
-        updateBoard(data.board); 
-    })
-    .catch(error => alert(error.message)); 
-};
-
-const pieceMapping = {
-    'p': '&#9823;',  // Black Pawn
-    'r': '&#9820;',  // Black Rook
-    'n': '&#9822;',  // Black Knight
-    'b': '&#9821;',  // Black Bishop
-    'q': '&#9819;',  // Black Queen
-    'k': '&#9818;',  // Black King
-    'P': '&#9817;',  // White Pawn
-    'R': '&#9814;',  // White Rook
-    'N': '&#9816;',  // White Knight
-    'B': '&#9815;',  // White Bishop
-    'Q': '&#9813;',  // White Queen
-    'K': '&#9812;',  // White King
-    ' ': '&nbsp;'    // Empty square
-};
-
-function updateBoard(board) {
-    for (const [square, piece] of Object.entries(board)) {
-        const pieceSymbol = pieceMapping[piece] || pieceMapping[' '];  
-        document.getElementById(square).innerHTML = pieceSymbol;
+    
+    function resignGame() {
+        fetch('{% url "resign_game" game.id %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                alert("You have resigned from the game.");
+                window.location.href = '{% url "home" %}';  
+            } else {
+                alert("Error resigning the game.");
+            }
+        })
+        .catch(error => console.error('Error:', error));
     }
-}
-
-function resignGame() {
-    fetch('{% url "resign_game" game.id %}', {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': '{{ csrf_token }}',
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => {
-        if (response.ok) {
-            alert("You have resigned from the game.");
-            window.location.href = '{% url "home" %}';  
-        } else {
-            alert("Error resigning the game.");
-        }
-    })
-    .catch(error => console.error('Error:', error));
-}
 </script>
 {% endblock %}
