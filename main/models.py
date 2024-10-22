@@ -25,4 +25,13 @@ class Game(models.Model):
         self.is_over = True
         self.save()
         
+
+class GameInvitation(models.Model):
+    inviter = models.ForeignKey(User, related_name='invitations_sent', on_delete=models.CASCADE)
+    invitee = models.ForeignKey(User, related_name='invitations_received', on_delete=models.CASCADE)
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, null=True, blank=True)
+    status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('accepted', 'Accepted'), ('rejected', 'Rejected')], default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
         

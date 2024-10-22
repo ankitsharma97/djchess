@@ -19,4 +19,5 @@ urlpatterns = [
     path('history/', views.history, name='history'),
     path('profile/', views.profile, name='profile'),
     path('about/', views.about, name='about'),
+    
 ]

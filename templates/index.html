@@ -23,32 +23,6 @@
 
         <div class="row">
             <div class="col-md-6">
-                <h2>Active Game</h2>
-                {% if active_game %}
-                    <div id="chess-board">
-                        <h4>Game with {{ active_game.opponent.username }}</h4>
-                        <div id="chessboard">
-                            <!-- Chessboard rendering goes here -->
-                        </div>
-                    </div>
-                    <form action="{% url 'game_detail' active_game.id %}" method="get">
-                        {% csrf_token %}
-                        <button class="mt-2 btn btn-danger" type="submit">Join The Game</button>
-                    </form>
-
-                    <form action="{% url 'resign_game' active_game.id %}" method="post">
-                        {% csrf_token %}
-                        <button class="mt-2 btn btn-danger" type="submit">Resign Game</button>
-                    </form>
-                {% else %}
-                    <h3>No Active Game</h3>
-                    <div class="mt-2">
-                        <a href="{% url 'create_game' %}" class="btn btn-primary">Start a New Game</a>
-                    </div>
-                    <div class="mt-2">
-                        <a href="{% url 'join_game' %}" class="btn btn-primary">Join the Game</a>
-                    </div>
-                {% endif %}
 
                 <div class="container mt-5">
                     <div class="row">
@@ -87,6 +61,32 @@
                         {% endfor %}
                     </div>
                 </div>
+
+                {% if active_game %}
+                    <div id="chess-board">
+                        <h4>You are invited to Game with {{ active_game.player2.first_name}}
+                            {% if active_game.player2.first_name == request.user.first_name %}
+                            {{ active_game.player1.first_name}}
+                            {% else %}
+                            {{ active_game.player2.first_name}}
+                            {% endif %}
+                        </h4>
+                        <div id="chessboard">
+                            <!-- Chessboard rendering goes here -->
+                        </div>
+                    </div>
+                    <form action="{% url 'game_detail' active_game.id %}" method="get">
+                        {% csrf_token %}
+                        <button class="mt-2 btn btn-danger" type="submit">Join The Game</button>
+                    </form>
+
+                    <form action="{% url 'resign_game' active_game.id %}" method="post">
+                        {% csrf_token %}
+                        <button class="mt-2 btn btn-danger" type="submit">Resign Game</button>
+                    </form>
+                {% endif %}
+
+                
             </div>
 
             <div class="col-md-6">
@@ -132,4 +132,5 @@
         </div>
     {% endif %}
 </div>
+
 {% endblock %}

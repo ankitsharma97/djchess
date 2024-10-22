@@ -154,12 +154,11 @@ def create_game(request):
 
         invited_player_id = request.POST.get('invite_player')
 
-        if invited_player_id:  # If an invited player ID is provided
+        if invited_player_id:
             invited_player = User.objects.get(id=invited_player_id)
             game = Game.objects.create(player1=request.user, player2=invited_player, board_state=chess.Board().fen(), turn='white')
-        else:  # No invited player, start game and wait for another player
+        else:  
             game = Game.objects.create(player1=request.user, board_state=chess.Board().fen(), turn='white')
-            # Set a message indicating that the game is waiting for another player
             messages.info(request, 'Game created! Waiting for another player to join.')
 
         return redirect('game_detail', game_id=game.id)
@@ -185,7 +184,6 @@ def join_game(request):
         else:
             return render(request, 'error.html', {'error': 'Game is already full.'})
 
-    # Fetch games where the player was invited but hasn't joined yet
     available_games = Game.objects.filter(player2__isnull=True).exclude(player1=request.user)
     return render(request, 'join_game.html', {'games': available_games})
 
