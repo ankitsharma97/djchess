@@ -28,6 +28,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://udaychandra-chess.com',
+    'https://www.udaychandra-chess.com',  # If you want to include www version
+]
 
 # Application definition
 
