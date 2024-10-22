@@ -45,8 +45,8 @@
                             {% if player.username != request.user.username %}
                                 <div class="col-md-12">
                                     <div class="row border-bottom py-2">
-                                        <div class="col-md-4">{{ player.first_name }}</div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-6">{{ player.first_name }}</div>
+                                        <div class="col-md-6">
                                             <form action="{% url 'create_game' %}" method="post">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="invite_player" value="{{ player.id }}">
