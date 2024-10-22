@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Waiting for Player{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <h2>Waiting for another player to join...</h2>
+    <p>Game ID: {{ game.id }}</p>
+    <p>Once the second player joins, the game will begin.</p>
+</div>
+
+<script>
+    // Polling to check if the second player has joined
+// Polling to check if the second player has joined and the game status
+function checkGameStatus() {
+    const gameId = "{{ game.id }}";
+
+    fetch(`/game/${gameId}/status/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Game status:', data);  // Log the entire data response
+            if (data.game.status === 'in_progress') {
+                console.log('Game is in progress. Redirecting...');
+                console.log('Game ID:', gameId);
+                window.location.href = `/game/${gameId}/`;
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+        });
+}
+
+// Check every 1 second
+setInterval(checkGameStatus, 1000);
+
+
+</script>
+{% endblock %}

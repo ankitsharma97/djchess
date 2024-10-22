@@ -64,7 +64,7 @@
 
                 {% if active_game %}
                     <div id="chess-board">
-                        <h4>You are invited to Game with {{ active_game.player2.first_name}}
+                        <h4>You are invited to Game with 
                             {% if active_game.player2.first_name == request.user.first_name %}
                             {{ active_game.player1.first_name}}
                             {% else %}
@@ -77,6 +77,7 @@
                     </div>
                     <form action="{% url 'game_detail' active_game.id %}" method="get">
                         {% csrf_token %}
+                        <input type="hidden" name="isJoined" value="yes">
                         <button class="mt-2 btn btn-danger" type="submit">Join The Game</button>
                     </form>
 

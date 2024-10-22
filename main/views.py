@@ -46,9 +46,9 @@ def home(request):
 
 def login(request):
     if request.method == "POST":
-        email = request.POST['email']
         password = request.POST['password']
-        user = authenticate(username=email, password=password)
+        username = request.POST['username']
+        user = authenticate(username=username, password=password)
         if user:
             auth_login(request, user)
             request.session['name'] = user.first_name
@@ -64,12 +64,13 @@ def signup(request):
         email = request.POST['email']
         password = request.POST['password']
         password1 = request.POST['password1']
+        username = request.POST['username']
         if password != password1:
             return render(request, 'signup.html', {'error': 'Password does not match'})
         if User.objects.filter(email=email).exists():
             return render(request, 'signup.html', {'error': 'Email already exists'})
         request.session['name'] = name
-        user = User.objects.create_user(username=email, email=email, password=password,first_name=name)
+        user = User.objects.create_user(username=username, email=email, password=password,first_name=name)
         user.save()
         
         return redirect('login')
@@ -156,9 +157,21 @@ def create_game(request):
 
         if invited_player_id:
             invited_player = User.objects.get(id=invited_player_id)
-            game = Game.objects.create(player1=request.user, player2=invited_player, board_state=chess.Board().fen(), turn='white')
-        else:  
-            game = Game.objects.create(player1=request.user, board_state=chess.Board().fen(), turn='white')
+            game = Game.objects.create(
+                player1=request.user,
+                player2=invited_player,
+                board_state=chess.Board().fen(),
+                turn='white',
+                status='pending'
+            )
+            messages.info(request, 'Game created! Waiting for the other player to join.')
+        else:
+            game = Game.objects.create(
+                player1=request.user,
+                board_state=chess.Board().fen(),
+                turn='white',
+                status='waiting_for_player'
+            )
             messages.info(request, 'Game created! Waiting for another player to join.')
 
         return redirect('game_detail', game_id=game.id)
@@ -168,25 +181,35 @@ def create_game(request):
 
 
 
+
 @login_required
 def join_game(request):
     if request.method == "POST":
+
         game_id = request.POST.get('game_id')
         game = get_object_or_404(Game, id=game_id)
+
 
         if game.player1 == request.user:
             return render(request, 'error.html', {'error': 'You cannot join a game you created.'})
 
-        if game.player2 is None:
-            game.player2 = request.user
-            game.save()
-            return redirect('game_detail', game_id=game.id)
-        else:
-            return render(request, 'error.html', {'error': 'Game is already full.'})
+        if game.status == 'pending':
+            if game.player2 is None:
+                game.player2 = request.user
+                game.status = 'in_progress'  
+                game.save() 
 
-    available_games = Game.objects.filter(player2__isnull=True).exclude(player1=request.user)
+                messages.success(request, 'You have successfully joined the game! The game is now in progress.')
+                return redirect('game_detail', game_id=game.id)
+            else:
+                return render(request, 'error.html', {'error': 'Game is already full.'})
+
+
+        elif game.status != 'pending':
+            return render(request, 'error.html', {'error': 'You cannot join this game, it is either in progress or completed.'})
+
+    available_games = Game.objects.filter(player2__isnull=True, status='pending').exclude(player1=request.user)
     return render(request, 'join_game.html', {'games': available_games})
-
 
 
 def board_status(board):
@@ -194,10 +217,21 @@ def board_status(board):
                   for square in chess.SQUARES}
     return board_dict
 
-
 @login_required
 def game_detail(request, game_id):
     game = get_object_or_404(Game, id=game_id)
+
+    
+    isJoined = request.GET.get('isJoined') 
+    if isJoined=='yes':
+        game.status = 'in_progress'
+        game.save()
+        messages.success(request, 'You have successfully joined the game! The game is now in progress.')
+        return redirect('game_detail', game_id=game.id)
+    
+    if  game.status == 'waiting_for_player' or game.status == 'pending':
+        return render(request, 'waiting_for_player.html', {'game': game})
+
     board = chess.Board(game.board_state)
 
     if request.method == "POST":
@@ -205,35 +239,30 @@ def game_detail(request, game_id):
             return JsonResponse({'error': 'Game is already over'}, status=400)
         
         try:
-            data = json.loads(request.body)  
+            data = json.loads(request.body)
             src = data.get('src')
             dest = data.get('dest')
 
-            # Check if it's the user's turn
             if (game.turn == 'white' and request.user != game.player1) or (game.turn == 'black' and request.user != game.player2):
                 return JsonResponse({'error': 'It is not your turn'}, status=403)
 
             move = chess.Move.from_uci(src + dest)
 
-            # Validate the move
             if move in board.legal_moves:
                 board.push(move)
                 game.board_state = board.fen()
                 
-                # Update moves history
+
                 moves = game.moves or ''
                 game.moves = f'{moves} {src}{dest}'
                 game.moves_count += 1
-                
-                # Update turn based on the board's state
+
                 game.turn = 'black' if board.turn == chess.BLACK else 'white'
-                
                 game.current_player = game.player2 if game.turn == 'black' else game.player1
-                
-                # Check for checkmate or stalemate
+
                 if board.is_checkmate():
                     game.is_over = True
-                    game.winner = game.player1 if game.turn == 'black' else game.player2 
+                    game.winner = game.player1 if game.turn == 'black' else game.player2
                     game.result = 'win' if game.turn == 'black' else 'loss'
                 elif board.is_stalemate():
                     game.is_over = True
@@ -241,7 +270,7 @@ def game_detail(request, game_id):
                     game.result = 'stalemate'
                 
                 game.save()
-                return JsonResponse({'board': board_status(board)})  
+                return JsonResponse({'board': board_status(board)})
             else:
                 return JsonResponse({'error': 'Invalid move'}, status=400)
 
@@ -267,10 +296,13 @@ def resign_game(request, game_id):
 
 def game_status(request, game_id):
     game = get_object_or_404(Game, id=game_id)
-    board = chess.Board(game.board_state)
-    return JsonResponse({'board': board_status(board)})
-
-
+    return JsonResponse({
+        'board': board_status(chess.Board(game.board_state)),  
+        'game': {
+            'status': game.status
+        }
+    })
+    
 @login_required
 def edit_game(request, game_id):
     game = get_object_or_404(Game, id=game_id)

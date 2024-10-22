@@ -2,6 +2,13 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Game(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('waiting_for_player', 'Waiting for Player'),
+        ('in_progress', 'In Progress'),
+        ('over', 'Over'),
+    ]
+    
     player1 = models.ForeignKey(User, related_name='games_as_player1', on_delete=models.CASCADE)
     player2 = models.ForeignKey(User, related_name='games_as_player2', on_delete=models.CASCADE, null=True, blank=True)
     board_state = models.TextField()  
@@ -11,6 +18,7 @@ class Game(models.Model):
     winner = models.ForeignKey(User, related_name='games_won', on_delete=models.CASCADE, null=True, blank=True)
     result = models.CharField(max_length=10, choices=[('win', 'Win'), ('loss', 'Loss'), ('draw', 'Draw'), ('stalemate', 'Stalemate')], null=True, blank=True)
     journal_entry = models.TextField(null=True, blank=True) 
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='waiting_for_player')
     moves = models.TextField(null=True, blank=True)
     moves_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -25,13 +33,5 @@ class Game(models.Model):
         self.is_over = True
         self.save()
         
-
-class GameInvitation(models.Model):
-    inviter = models.ForeignKey(User, related_name='invitations_sent', on_delete=models.CASCADE)
-    invitee = models.ForeignKey(User, related_name='invitations_received', on_delete=models.CASCADE)
-    game = models.ForeignKey(Game, on_delete=models.CASCADE, null=True, blank=True)
-    status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('accepted', 'Accepted'), ('rejected', 'Rejected')], default='pending')
-    created_at = models.DateTimeField(auto_now_add=True)
-
 
         
