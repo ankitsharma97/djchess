@@ -119,9 +119,6 @@
           <li class="nav-item">
             <a class="nav-link text-white shadow mx-2" href="{% url "history" %}">History</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link text-white shadow mx-2" href="{% url "about" %}">About</a>
-          </li>
           <li class="nav-item dropdown shadow mx-2">
             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               {{ request.session.name }}
@@ -142,10 +139,7 @@
             <a class="nav-link text-white" href="{% url 'login' %}">Signin</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link text-white shadow mx-2" href="">History</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link text-white shadow mx-2" href="">About</a>
+            <a class="nav-link text-white shadow mx-2" href="{% url "about" %}">About</a>
           </li>
           {% endif %}
         </ul>
