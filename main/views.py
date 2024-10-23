@@ -32,7 +32,9 @@ def home(request):
         (Q(player1=request.user) | Q(player2=request.user)),
         is_over=True
     ).order_by('-updated_at')  
-    players = User.objects.exclude(id=request.user.id)
+    
+    players = User.objects.exclude(id=request.user.id).exclude(is_active=False)
+
 
     context = {
         'active_game': active_game,
@@ -50,6 +52,7 @@ def login(request):
         username = request.POST['username']
         user = authenticate(username=username, password=password)
         if user:
+            user.is_active = True
             auth_login(request, user)
             request.session['name'] = user.first_name
             return redirect('home')
@@ -78,6 +81,8 @@ def signup(request):
 
 @login_required
 def logout(request):
+    user = request.user
+    user.is_active = False
     auth_logout(request)
     return redirect('home')
 
@@ -364,3 +369,5 @@ def profile(request):
 
 def about(request):
     return render(request, 'about.html')
+
+
