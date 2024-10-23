@@ -40,24 +40,12 @@
                         </div>
                     </div>
                 
-                    <div class="row">
-                        {% for player in players %}
-                            {% if player.username != request.user.username %}
-                                <div class="col-md-12">
-                                    <div class="row border-bottom py-2">
-                                        <div class="col-md-6">{{ player.first_name }}</div>
-                                        <div class="col-md-6">
-                                            <form action="{% url 'create_game' %}" method="post">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="invite_player" value="{{ player.id }}">
-                                                <button class="btn btn-primary" type="submit">Invite</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        {% endfor %}
+                    <div id="players-list">
+                        <!-- Players will be dynamically updated here -->
                     </div>
+                    
+
+                    
                 </div>
 
                 {% if active_game %}
@@ -131,5 +119,47 @@
         </div>
     {% endif %}
 </div>
+
+<!-- Make sure to replace with your actual fetch call URL -->
+<script>
+    function fetchPlayers() {
+        fetch('{% url "get_active_players" %}', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest' // Optional but good practice
+            }
+        })
+        .then(response => response.json())  // Parse the JSON response
+        .then(data => {
+            var playersList = '';
+            if (data.players) {
+                data.players.forEach(function(player) {
+                    playersList += `
+                        <div class="col-md-12">
+                            <div class="row border-bottom py-2">
+                                <div class="col-md-6">${player.first_name}</div>
+                                <div class="col-md-6">
+                                    <form action="{% url 'create_game' %}" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="invite_player" value="${player.id}">
+                                        <button class="btn btn-primary" type="submit">Invite</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+            }
+            document.getElementById('players-list').innerHTML = playersList;
+        })
+        .catch(error => {
+            console.error('Failed to fetch players.', error);
+        });
+    }
+
+    // Poll every second
+    setInterval(fetchPlayers, 1000);
+</script>
+
+
 
 {% endblock %}

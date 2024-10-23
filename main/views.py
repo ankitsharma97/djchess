@@ -1,3 +1,4 @@
+from datetime import timedelta
 import json
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404, render,redirect
@@ -12,12 +13,27 @@ from django.http import JsonResponse
 from django.db.models import Q 
 from .models import Game
 from django.contrib import messages
+from django.utils.timezone import now
 import chess
 
 board = chess.Board()
 
 # Create your views here.
 
+@login_required
+def get_active_players(request):
+    ten_minutes_ago = now() - timedelta(hours=2)
+    active_users = User.objects.filter(last_login__gte=ten_minutes_ago).exclude(id=request.user.id)
+    players_data = [{'id': user.id, 'first_name': user.first_name} for user in active_users]
+    return JsonResponse({'players': players_data})
+
+# @login_required
+# def get_active_players(request):
+#     if request.user.is_authenticated:
+#         players = User.objects.exclude(id=request.user.id).exclude(is_active=False)
+#         players_data = [{'id': player.id, 'first_name': player.first_name} for player in players]
+#         return JsonResponse({'players': players_data})
+#     return JsonResponse({'error': 'User not authenticated'}, status=401)
 
 def home(request):
     if not request.user.is_authenticated:
